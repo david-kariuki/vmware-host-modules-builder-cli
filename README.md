@@ -12,6 +12,6 @@ To download and use this script:
   5. Type **`chmod +x linux-vmware-host-modules-builder.sh`** and click on `enter key` to make the script executable.
   6. Type **`./linux-vmware-host-modules-builder.sh`** to run the script.
 
-
+\
 
 >You also, can download the host modules and build them manually from Michal Kubeček(https://github.com/mkubecek/vmware-host-modules)
