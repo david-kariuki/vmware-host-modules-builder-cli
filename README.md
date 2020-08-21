@@ -14,5 +14,5 @@ To download and use this script:
 
 
 \
-
+</br>
 >You also, can download the host modules and build them manually from Michal Kubeček(https://github.com/mkubecek/vmware-host-modules)
