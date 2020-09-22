@@ -88,7 +88,6 @@ function createWorkingEnvironment(){
     rm -r vmwareFix > /dev/null # Delete vmwareFix folder
     $(mkdir vmwareFix) > /dev/null # Create vmwareFix folder
     cd vmwareFix > /dev/null # Change directory to vmwareFix folder
-    currentDate="Date : `date`\n\n" # Get current date
 }
 
 # Function to check if user is running as root
