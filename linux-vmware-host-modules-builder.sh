@@ -82,7 +82,7 @@ function formatTime() {
 }
 
 # Function to initiate logfile
-function initLogFile(){
+function createWorkingEnvironment(){
     startTime=`date +%s` # Get start time
     cd ~ || exit # Change directory to users' home directory
     rm -r vmwareFix > /dev/null # Delete vmwareFix folder
@@ -321,7 +321,7 @@ function exportPath(){
 # Functio to start script
 function initScript(){
     ${clear} # Clear terminal
-    initLogFile
+    createWorkingEnvironment
     cPrint "GREEN" "Initiating script."
     apt-get install netcat > /dev/null # Install netcat if not installed to be used for connection check
     ${clear} # Clear terminal
