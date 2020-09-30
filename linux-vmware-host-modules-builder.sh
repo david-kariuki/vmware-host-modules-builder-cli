@@ -1,6 +1,9 @@
 # Copyright (c) 2020 by David Kariuki (dk). All Rights Reserved.
+# Bash shell script to fix chrome on debian and ubuntu based distros
 
+#!/bin/bash
 
+1="" # Empty any parameter passed by user during script exercution
 declare -r targetLinux="Debian Linux"
 declare -r scriptVersion="1.0" # Stores scripts version
 declare -l -r scriptName="linux-vmware_fix" # Stores script file name (Set to lowers and read-only)
