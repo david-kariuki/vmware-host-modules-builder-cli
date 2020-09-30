@@ -72,8 +72,7 @@ function holdTerminal(){
 
 # Function to format time from seconds to days:hours:minutes:seconds
 function formatTime() {
-    local inputSeconds=$1; local minutes=0
-    local hour=0; local day=0
+    local inputSeconds=$1 local minutes=0 hour=0 day=0
     if((inputSeconds>59))
     then
         ((seconds=inputSeconds%60))
