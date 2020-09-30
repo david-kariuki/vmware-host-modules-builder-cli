@@ -66,7 +66,7 @@ function holdTerminal(){
         then
             break
         fi
-    done;
+    done
 }
 
 # Function to format time from seconds to days:hours:minutes:seconds
