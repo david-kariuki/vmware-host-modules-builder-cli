@@ -1,4 +1,5 @@
 # Copyright (c) 2020 by David Kariuki (dk). All Rights Reserved.
+
 # Bash shell script to fix chrome on debian and ubuntu based distros
 
 #!/bin/bash
