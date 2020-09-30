@@ -95,7 +95,7 @@ function isUserRoot(){
     declare -l -r user=$USER # Declare user variable as lowercase
     if [ "$user" != 'root' ]; then
         cPrint "RED" "This script works fully when run as root.\n Please run it as root to avoid issues/errors.\n"
-        holdTerminal 4 # Hold for user to read
+        holdTerminal 1 # Hold for user to read
         exitScript --end
     else return $(true)
     fi
@@ -149,28 +149,28 @@ function checkDebugAndRollback(){
     elif [ "$1" == '--network' ]; then # Check for network switch
         cPrint "GREEN" "Debugging and rolling back some changes due to network interrupt. Please wait..."
     fi
-    holdTerminal 3 # Hold for user to read
+    holdTerminal 1 # Hold for user to read
 
     cPrint "YELLOW"  "Checking for broken/unmet dependencies and fixing broken installs."
-    holdTerminal 3 # Hold for user to read
+    holdTerminal 1 # Hold for user to read
     apt-get check
     apt-get --fix-broken install
     sectionBreak
     cPrint "YELLOW" "Cleaning apt-get cache, disk space and removing unused packages."
-    holdTerminal 3 # Hold for user to read
+    holdTerminal 1 # Hold for user to read
     apt-get autoclean -y
     apt-get clean -y
     apt-get autoremove -y
     sectionBreak
     cPrint "YELLOW" "Configuring packages."
-    holdTerminal 2 # Hold for user to read
+    holdTerminal 1 # Hold for user to read
     dpkg --configure -a
     cPrint "NC" "dpkg package configuration completed."
-    holdTerminal 3 # Hold for user to read
+    holdTerminal 1 # Hold for user to read
     sectionBreak
 
     cPrint "YELLOW" "Cleaning apt-get cache, disk space and removing unused packages."
-    holdTerminal 3 # Hold for user to read
+    holdTerminal 1 # Hold for user to read
     apt-get autoclean -y
     apt-get clean -y
     apt-get --fix-broken install
@@ -178,7 +178,7 @@ function checkDebugAndRollback(){
     sectionBreak
 
     cPrint "YELLOW" "Updating AppStream cache."
-    holdTerminal 3 # Hold for user to read
+    holdTerminal 1 # Hold for user to read
     appstreamcli refresh --force
     sectionBreak
     cPrint "GREEN" "Checking and debugging completed successfuly!!"
@@ -188,7 +188,7 @@ function checkDebugAndRollback(){
 # Function to exit script with custom coloured message
 function exitScript(){
     cPrint "RED" "Exiting script...." # Display exit message
-    holdTerminal 2 # Hold for user to read
+    holdTerminal 1 # Hold for user to read
 
     if [ "$1" == '--end' ]; then # Check for --end switch
         ${clear} # Clear terminal
@@ -245,64 +245,64 @@ function downloadHostModules(){
         then
           ${clear} # Clear terminal
           cPrint "YELLOW" "Downloading vmware-host-modules for version $targetVmwareVersion from https://github.com/mkubecek/vmware-host-modules"
-          holdTerminal 5 # Hold terminal
+          holdTerminal 1 # Hold terminal
           download=$(wget https://github.com/mkubecek/vmware-host-modules/archive/workstation-$targetVmwareVersion.tar.gz)
 
           # Check if download was successfull for selected version
           if [[ $download == *"404 Not Found"* ]]; then
               cPrint "GREEN" "The version you entered does not exist. Please try again."
-              holdTerminal 4 # Hold terminal
+              holdTerminal 1 # Hold terminal
               downloadHostModules
           else
               cPrint "GREEN" "Version $targetVmwareVersion download complete."
-              holdTerminal 3 # Hold terminal
+              holdTerminal 1 # Hold terminal
               ${clear} # Clear terminal
 
               cPrint "YELLOW" "Extracting downloaded workstation-$targetVmwareVersion.tar.gz"
-              holdTerminal 4 # Hold terminal
+              holdTerminal 1 # Hold terminal
               $(tar -xzf workstation-$targetVmwareVersion.tar.gz)
               cPrint "GREEN" "Extraction complete."
               holdTerminal 1 # Hold terminal
 
               cPrint "YELLOW" "Copying vmmon and vmnet for archiving."
-              holdTerminal 4 # Hold terminal
+              holdTerminal 1 # Hold terminal
               path="vmware-host-modules-workstation-$targetVmwareVersion"
               $(cp -r $path/* .)
               cPrint "GREEN" "Copying complete."
               holdTerminal 1 # Hold terminal
 
               cPrint "YELLOW" "Adding vmmon to .tar archive."
-              holdTerminal 3 # Hold terminal
+              holdTerminal 1 # Hold terminal
               $(tar -cf vmmon.tar vmmon-only)
               cPrint "GREEN" "Archiving complete."
               holdTerminal 1 # Hold terminal
 
               cPrint "YELLOW" "Adding vmnet to .tar archive."
-              holdTerminal 3 # Hold terminal
+              holdTerminal 1 # Hold terminal
               $(tar -cf vmnet.tar vmnet-only)
               cPrint "GREEN" "Archiving complete."
               holdTerminal 1 # Hold terminal
 
               cPrint "YELLOW" "Copying vmmon.tar and vmnet.tar to /usr/lib/vmware/modules/source/"
-              holdTerminal 4 # Hold terminal
+              holdTerminal 1 # Hold terminal
               cp -v vmmon.tar vmnet.tar /usr/lib/vmware/modules/source/
               cPrint "GREEN" "Copying complete."
               holdTerminal 1 # Hold terminal
 
               ${clear} # Clear terminal
               cPrint "YELLOW" "Installing modules..."
-              holdTerminal 2 # Hold terminal
+              holdTerminal 1 # Hold terminal
               vmware-modconfig --console --install-all
               cPrint "GREEN" "Installation complete."
               holdTerminal 1 # Hold terminal
           fi
         else
           cPrint "GREEN" "Vmware version empty!"
-          holdTerminal 2 # Hold terminal
+          holdTerminal 1 # Hold terminal
         fi
     else
         cPrint "GREEN" "Vmware version not provided!"
-        holdTerminal 2 # Hold terminal
+        holdTerminal 1 # Hold terminal
     fi
 }
 
@@ -310,10 +310,10 @@ function downloadHostModules(){
 function exportPath(){
   # Export path
   cPrint "YELLOW" "Exporting PATH."
-  holdTerminal 2 # Hold terminal
+  holdTerminal 1 # Hold terminal
   export PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin"
   cPrint "RED" "$PATH" # Display PATH
-  holdTerminal 2 # Hold terminal
+  holdTerminal 1 # Hold terminal
   #export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
 }
 
@@ -327,7 +327,7 @@ function initScript(){
 
     echo ""; cPrint "RED" "Hello $USER!!"
     cPrint "YELLOW"	"This script will help you fix your Vmware host modules and vmmon on your $targetLinux."
-    holdTerminal 7 # Hold for user to read
+    holdTerminal 5 # Hold for user to read
 
     # Check if user is running as root
     if isUserRoot; then
