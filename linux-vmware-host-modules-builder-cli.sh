@@ -7,7 +7,7 @@
 1="" # Empty any parameter passed by user during script exercution
 declare -r targetLinux="Debian Linux"
 declare -r scriptVersion="1.0" # Stores scripts version
-declare -l -r scriptName="linux-vmware_fix" # Set to lowers and read-only
+declare -l -r scriptName="linux-vmware-host-modules-builder-cli" # Set to lowers and read-only
 declare -l -r networkTestUrl="www.google.com" # Set to lowers and read-only
 declare -r versionNoSequence='^[0-9.]+$'
 declare -l startTime="" # Stores start time of execution
