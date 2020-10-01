@@ -1,4 +1,4 @@
-# linux-vmware-host-modules-builder
+# linux-vmware-host-modules-builder-cli
 This shell script downloads, builds and installs `Vmware` host modules for your Linux `Vmware`. 
 
 The script will download the required `vmmnet` and `vmmon` for your `Vmware` version then build and install them for you. 
