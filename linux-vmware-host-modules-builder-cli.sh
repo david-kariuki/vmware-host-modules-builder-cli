@@ -247,7 +247,13 @@ function exitScript(){
         fi
     fi
 
-    exit 0 # Exit script
+    # Ask for system reboot
+    if querySystemReboot
+    then
+        reboot # Perform system reboot
+    else
+        exit 0 # Exit script
+    fi
 }
 
 # Function to confirm usage of previously used target version
@@ -270,6 +276,38 @@ function queryReuseTargetVersion(){
             return $(true) # Exit loop returning true
         elif [[ "$queryReuse" == 'no' || "$queryReuse" == 'n'
               || "$queryReuse" == '2' ]]
+        then # Option : No
+            ${clear} # Clear terminal
+            return $(false) # Exit loop returning false
+        else
+            # Invalid entry
+            cPrint "GREEN" "Invalid entry!! Please try again." |& tee -a $logFileName
+        fi
+
+        sleep 1 # Hold loop
+    done
+}
+
+# Function to ask user for stsem reboot
+function querySystemReboot(){
+
+    while true
+    do # Start infinite loop
+        ${clear} # Clear terminal
+
+        # Prompt user to set GNOME Desktop as default
+        cPrint "YELLOW" "A system reboot is recommended to load the modules during startup for vmware to work. Do you want to reboot now?\n\t1. Y (Yes) - to reboot.\n\t2. N (No) to cancel." |& tee -a $logFileName
+        read -p ' option: ' queryReboot
+        queryReboot=${queryReboot,,} # Convert to lowercase
+        # Display choice
+        cPrint "GREEN" " You chose : $queryReboot" |& tee -a $logFileName
+
+        if  [[ "$queryReboot" == 'yes' || "$queryReboot" == 'y'
+              || "$queryReboot" == '1' ]]
+        then # Option : Yes
+            return $(true) # Exit loop returning true
+        elif [[ "$queryReboot" == 'no' || "$queryReboot" == 'n'
+              || "$queryReboot" == '2' ]]
         then # Option : No
             ${clear} # Clear terminal
             return $(false) # Exit loop returning false
