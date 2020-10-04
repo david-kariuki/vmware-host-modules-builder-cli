@@ -1,18 +1,24 @@
 # Copyright (c) 2020 by David Kariuki (dk). All Rights Reserved.
 
-# Bash shell script to fix chrome on debian and ubuntu based distros
+# This script uses two methods to retrieve the VMWARE module source build modules and
+# install them.
 
 #!/bin/bash
 
 1="" # Empty any parameter passed by user during script exercution
 declare -r targetLinux="Debian Linux"
-declare -r scriptVersion="1.0" # Stores scripts version
+declare -r scriptVersion="2.0" # Stores scripts version
 declare -l -r scriptName="linux-vmware-host-modules-builder-cli" # Set to lowers and read-only
 declare -l -r networkTestUrl="www.google.com" # Set to lowers and read-only
 declare -r versionNoSequence='^[0-9.]+$'
 declare -l startTime="" # Stores start time of execution
 declare -l totalExecutionTime="" # Total execution time in days:hours:minutes:seconds
-targetVmwareVersion=0
+declare -r buildFromSourceAndInstall="buildFromSourceAndInstall"
+declare -r replaceOriginalTarballs="replaceOriginalTarballs"
+declare targetVmwareVersion="" # Target vmware version
+declare -i runningBothOptions=0
+declare -i ranAnyMethod=0
+
 clear=clear # Command to clear terminal
 
 # Function to create a custom coloured print
@@ -105,7 +111,6 @@ function formatTime() {
 
 # Function to initiate logfile
 function createWorkingDirectory(){
-    startTime=`date +%s` # Get start time
     cd ~ || exit # Change directory to users' home directory
     rm -r vmwareFix > /dev/null # Delete vmwareFix folder
     $(mkdir vmwareFix) > /dev/null # Create vmwareFix folder
@@ -135,10 +140,12 @@ function isConnected(){
 
     while :
     do # Starting infinite loop
+        ${clear} # Clear terminal
+
         cPrint "YELLOW" "Checking for internet connection!!"
-        if trap `nc -zw1 $networkTestUrl 443` && echo |openssl s_client -connect $networkTestUrl:443 2>&1 |awk '
+        if `nc -zw1 $networkTestUrl 443` && echo |openssl s_client -connect $networkTestUrl:443 2>&1 |awk '
         handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 }
-        $1 $2 == "SSLhandshake" { handshake = 1 }'
+        $1 $2 == "SSLhandshake" { handshake = 1 }' &> /dev/null
         then # Internet connection established
             connEst # Display internet connection established message
             return $(true) # Exit loop returning true
@@ -172,6 +179,9 @@ function isConnected(){
 
 # Function to fix any unmet dependencies and broken installs incase of network interruption
 function checkDebugAndRollback(){
+
+    ${clear} # Clear terminal
+
     if [ "$1" == '--debug' ]
     then # Check for debug switch
         cPrint "GREEN" "Checking for errors and debugging. Please wait..."
@@ -186,38 +196,23 @@ function checkDebugAndRollback(){
     holdTerminal 1 # Hold for user to read
     apt-get check
     apt-get --fix-broken install
-    sectionBreak
-    cPrint "YELLOW" "Cleaning apt-get cache, disk space and removing unused packages."
-    holdTerminal 1 # Hold for user to read
-    apt-get autoclean -y
-    apt-get clean -y
-    apt-get autoremove -y
-    sectionBreak
-    cPrint "YELLOW" "Configuring packages."
-    holdTerminal 1 # Hold for user to read
     dpkg --configure -a
-    cPrint "NC" "dpkg package configuration completed."
-    holdTerminal 1 # Hold for user to read
     sectionBreak
 
     cPrint "YELLOW" "Cleaning apt-get cache, disk space and removing unused packages."
     holdTerminal 1 # Hold for user to read
-    apt-get autoclean -y
     apt-get clean -y
-    apt-get --fix-broken install
+    apt-get autoclean -y
     apt-get autoremove -y
     sectionBreak
 
-    cPrint "YELLOW" "Updating AppStream cache."
-    holdTerminal 1 # Hold for user to read
-    appstreamcli refresh --force
-    sectionBreak
     cPrint "GREEN" "Checking and debugging completed successfuly!!"
     sectionBreak
 }
 
 # Function to exit script with custom coloured message
 function exitScript(){
+
     cPrint "RED" "Exiting script...." # Display exit message
     holdTerminal 1 # Hold for user to read
 
@@ -238,56 +233,106 @@ function exitScript(){
         cPrint "YELLOW" "Script execution time : $totalExecutionTime \n"
         cPrint "RED" "Exited script...\n\n" # Display exit message
         cd ~ || exit # Change to home directory
-        rm -r vmwareFix > /dev/null # Delete vmwareFix folder
+        rm -r vmwareFix &> /dev/null # Delete vmwareFix folder
+
     elif [ "$1" == '--connectionFailure' ]
     then
         cPrint "RED" "\n\n This script requires a stable internet connection to work fully!!"
         cPrint "NC" "Please check your connection settings and re-run the script.\n"
 
-        if [ "$2" == '--rollback' ]
-        then # Check for rollback switch
-
-            # Initiate debug and rollback
-            checkDebugAndRollback --network # Check for and fix any broken installs or unmet dependencies
+        if [ $ranAnyMethod -eq 1 ]
+        then
+            # Check for and fix any broken installs or unmet dependencies
+            checkDebugAndRollback --network
         fi
     fi
 
     exit 0 # Exit script
 }
 
-function getTargetVmwareVersion(){
+# Function to confirm usage of previously used target version
+function queryReuseTargetVersion(){
+
     while true
     do # Start infinite loop
         ${clear} # Clear terminal
 
-        # Prompt user for Vmware version
-        cPrint "YELLOW" "Input Vmware version to continue."
-        cPrint "GREEN" "Example version - 15.5.6"
-        read -p ' Vmware version: ' vmwareVersion
-        targetVmwareVersion=${vmwareVersion,,} # Convert to lowercase
-        cPrint "GREEN" " You chose : $targetVmwareVersion" # Display choice
+        # Prompt user to set GNOME Desktop as default
+        cPrint "YELLOW" "Should the script reuse version $targetVmwareVersion for current method?\n\t1. Y (Yes) - to reuse version $targetVmwareVersion\n\t2. N (No) to set another version." |& tee -a $logFileName
+        read -p ' option: ' queryReuse
+        queryReuse=${queryReuse,,} # Convert to lowercase
+        # Display choice
+        cPrint "GREEN" " You chose : $queryReuse" |& tee -a $logFileName
 
-        # Check input
-        if [[ $targetVmwareVersion =~ $versionNoSequence ]]
-        then
+        if  [[ "$queryReuse" == 'yes' || "$queryReuse" == 'y'
+              || "$queryReuse" == '1' ]]
+        then # Option : Yes
             return $(true) # Exit loop returning true
+        elif [[ "$queryReuse" == 'no' || "$queryReuse" == 'n'
+              || "$queryReuse" == '2' ]]
+        then # Option : No
+            ${clear} # Clear terminal
+            return $(false) # Exit loop returning false
         else
-            cPrint "GREEN" "Invalid version!! Please try again." # Invalid entry
+            # Invalid entry
+            cPrint "GREEN" "Invalid entry!! Please try again." |& tee -a $logFileName
         fi
 
         sleep 1 # Hold loop
     done
 }
 
-function downloadHostModules(){
+# Function to ask user for vmware version to be used
+function getTargetVmwareVersion(){
+
+    # Check if target vmware version is already set
+    if [ -z "$targetVmwareVersion" ]
+    then
+        while true
+        do # Start infinite loop
+            ${clear} # Clear terminal
+
+            # Prompt user for Vmware version
+            cPrint "YELLOW" "Input Vmware version to continue."
+            cPrint "GREEN" "Example version - 15.5.6"
+            read -p ' Vmware version: ' vmwareVersion
+            targetVmwareVersion=${vmwareVersion,,} # Convert to lowercase
+            cPrint "GREEN" " You chose : $targetVmwareVersion" # Display choice
+
+            # Check input
+            if [[ $targetVmwareVersion =~ $versionNoSequence ]]
+            then
+                return $(true) # Exit loop returning true
+            else
+                cPrint "GREEN" "Invalid version!! Please try again." # Invalid entry
+            fi
+
+            sleep 1 # Hold loop
+        done
+
+    else
+        if ! queryReuseTargetVersion
+        then
+            targetVmwareVersion=""
+            getTargetVmwareVersion
+            break
+        fi
+    fi
+}
+
+# Function to build the modules from source and install them manually
+function retrieveBuildInstallModules(){
     if getTargetVmwareVersion
     then
         if [ ! -z "$targetVmwareVersion" ]
         then
             ${clear} # Clear terminal
 
+            createWorkingDirectory # Create working directory
+
             cPrint "YELLOW" "Downloading vmware-host-modules for version $targetVmwareVersion from https://github.com/mkubecek/vmware-host-modules"
             holdTerminal 1 # Hold terminal
+
             download=$(wget https://github.com/mkubecek/vmware-host-modules/archive/workstation-$targetVmwareVersion.tar.gz)
 
             # Check if download was successfull for selected version
@@ -295,49 +340,91 @@ function downloadHostModules(){
             then
                 cPrint "GREEN" "The version you entered does not exist. Please try again."
                 holdTerminal 1 # Hold terminal
-                downloadHostModules
+                replaceOriginalTarballs
+
             else
-                cPrint "GREEN" "Version $targetVmwareVersion download complete."
-                holdTerminal 1 # Hold terminal
-                ${clear} # Clear terminal
+                if [[ "$1" == "$buildFromSourceAndInstall" ]]
+                then
+                    cPrint "GREEN" "Version $targetVmwareVersion download complete."
+                    holdTerminal 1 # Hold terminal
+                    ${clear} # Clear terminal
 
-                cPrint "YELLOW" "Extracting downloaded workstation-$targetVmwareVersion.tar.gz"
-                holdTerminal 1 # Hold terminal
-                $(tar -xzf workstation-$targetVmwareVersion.tar.gz)
-                cPrint "GREEN" "Extraction complete."
-                holdTerminal 1 # Hold terminal
+                    cPrint "YELLOW" "Extracting downloaded workstation-$targetVmwareVersion.tar.gz"
+                    holdTerminal 1 # Hold terminal
+                    $(tar -xzf workstation-$targetVmwareVersion.tar.gz)
+                    cPrint "GREEN" "Extraction complete."
+                    holdTerminal 1 # Hold terminal
 
-                cPrint "YELLOW" "Copying vmmon and vmnet for archiving."
-                holdTerminal 1 # Hold terminal
-                path="vmware-host-modules-workstation-$targetVmwareVersion"
-                $(cp -r $path/* .)
-                cPrint "GREEN" "Copying complete."
-                holdTerminal 1 # Hold terminal
+                    cPrint "YELLOW" "Copying modules for building."
+                    holdTerminal 1 # Hold terminal
+                    path="vmware-host-modules-workstation-$targetVmwareVersion"
+                    $(cp -r $path/* .)
+                    cPrint "GREEN" "Copying complete."
+                    holdTerminal 1 # Hold terminal
 
-                cPrint "YELLOW" "Adding vmmon to .tar archive."
-                holdTerminal 1 # Hold terminal
-                $(tar -cf vmmon.tar vmmon-only)
-                cPrint "GREEN" "Archiving complete."
-                holdTerminal 1 # Hold terminal
+                    cPrint "YELLOW" "Running make to build modules from Makefile."
+                    holdTerminal 1 # Hold terminal
+                    $(make -i) # make ignoring errors
 
-                cPrint "YELLOW" "Adding vmnet to .tar archive."
-                holdTerminal 1 # Hold terminal
-                $(tar -cf vmnet.tar vmnet-only)
-                cPrint "GREEN" "Archiving complete."
-                holdTerminal 1 # Hold terminal
+                    cPrint "YELLOW" "Running make install to copy the built modules to required locations."
+                    holdTerminal 2 # Hold
+                    $(make install -i ) # make install ignoring errors
 
-                cPrint "YELLOW" "Copying vmmon.tar and vmnet.tar to /usr/lib/vmware/modules/source/"
-                holdTerminal 1 # Hold terminal
-                cp -v vmmon.tar vmnet.tar /usr/lib/vmware/modules/source/
-                cPrint "GREEN" "Copying complete."
-                holdTerminal 1 # Hold terminal
+                    cPrint "GREEN" "Installation by method 1 completed."
+                    holdTerminal 1 # Hold terminal
 
-                ${clear} # Clear terminal
-                cPrint "YELLOW" "Installing modules..."
-                holdTerminal 1 # Hold terminal
-                vmware-modconfig --console --install-all
-                cPrint "GREEN" "Installation complete."
-                holdTerminal 1 # Hold terminal
+                    ranAnyMethod=1 # Set ran any method to 1
+
+                elif [[ "$1" == "$replaceOriginalTarballs" ]]
+                then
+                    cPrint "GREEN" "Version $targetVmwareVersion download complete."
+                    holdTerminal 1 # Hold terminal
+                    ${clear} # Clear terminal
+
+                    cPrint "YELLOW" "Extracting downloaded workstation-$targetVmwareVersion.tar.gz"
+                    holdTerminal 1 # Hold terminal
+                    $(tar -xzf workstation-$targetVmwareVersion.tar.gz)
+                    cPrint "GREEN" "Extraction complete."
+                    holdTerminal 1 # Hold terminal
+
+                    cPrint "YELLOW" "Copying vmmon and vmnet for archiving."
+                    holdTerminal 1 # Hold terminal
+                    path="vmware-host-modules-workstation-$targetVmwareVersion"
+                    $(cp -r $path/* .)
+                    cPrint "GREEN" "Copying complete."
+                    holdTerminal 1 # Hold terminal
+
+                    cPrint "YELLOW" "Adding vmmon to .tar archive."
+                    holdTerminal 1 # Hold terminal
+                    $(tar -cf vmmon.tar vmmon-only)
+                    cPrint "GREEN" "Archiving complete."
+                    holdTerminal 1 # Hold terminal
+
+                    cPrint "YELLOW" "Adding vmnet to .tar archive."
+                    holdTerminal 1 # Hold terminal
+                    $(tar -cf vmnet.tar vmnet-only)
+                    cPrint "GREEN" "Archiving complete."
+                    holdTerminal 1 # Hold terminal
+
+                    cPrint "YELLOW" "Copying vmmon.tar and vmnet.tar to /usr/lib/vmware/modules/source/"
+                    holdTerminal 1 # Hold terminal
+                    cp -v vmmon.tar vmnet.tar /usr/lib/vmware/modules/source/
+                    cPrint "GREEN" "Copying complete."
+                    holdTerminal 1 # Hold terminal
+
+                    cPrint "NC" "Checking for and removing duplicates..."
+                    holdTerminal 1 # Hold terminal
+                    rm -f usr/lib/vmware/modules/source/vmnet\ copy.tar &> /dev/null
+
+                    cPrint "YELLOW" "Installing modules..."
+                    holdTerminal 1 # Hold terminal
+                    vmware-modconfig --console --install-all
+
+                    cPrint "GREEN" "Installation by method 2 completed."
+                    holdTerminal 1 # Hold terminal
+
+                    ranAnyMethod=1 # Set ran any method to 1
+                fi
             fi
         else
             cPrint "GREEN" "Vmware version empty!"
@@ -351,6 +438,7 @@ function downloadHostModules(){
 
 # Function to set PATH
 function exportPath(){
+
     # Export path
     cPrint "YELLOW" "Exporting PATH."
     holdTerminal 1 # Hold terminal
@@ -360,15 +448,69 @@ function exportPath(){
     #export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
 }
 
+# Function to display main menu
+function displayMainMenu(){
+    while true
+    do # Start infinite loop
+        ${clear} # Clear terminal
+
+        # Prompt user for Vmware version
+        cPrint "YELLOW" "This script uses two methods to retrieve the module source build modules and install them.\n\t1. Method 1: Build and install.\n\t2. Method 2: Replace original tarballs.\n\t3. Run both methods.\n\t4. Exit"
+
+        cPrint "GREEN" "Select a method above to proceed."
+        read -p ' Method: ' method
+        method=${method,,} # Convert to lowercase
+        cPrint "GREEN" " You chose : $method" # Display choice
+
+        # Check input
+        if [[ "$method" == "1" ]]
+        then
+            # Build the modules from source and install them manually
+            retrieveBuildInstallModules "$buildFromSourceAndInstall"
+
+        elif [[ "$method" == "2" ]]
+        then
+            # Download Vmware host modules and replace original tarballs
+            retrieveBuildInstallModules "$replaceOriginalTarballs"
+
+        elif [[ "$method" == "3" ]]
+        then
+            runningBothOptions=1 # Set running both options to 1
+
+            # Build the modules from source and install them manually
+            retrieveBuildInstallModules "$buildFromSourceAndInstall"
+
+            # Download Vmware host modules and replace original tarballs
+            retrieveBuildInstallModules "$replaceOriginalTarballs"
+
+        elif [[ "$method" == "4" ]]
+        then # Exit script
+
+            if [ $ranAnyMethod -eq 1 ]
+            then
+                checkDebugAndRollback
+            fi
+            break # Break from loop
+        else
+            cPrint "GREEN" "Invalid version!! Please try again." # Invalid entry
+        fi
+
+        sleep 1 # Hold loop
+    done
+}
+
 # Functio to start script
 function initScript(){
+
+    startTime=`date +%s` # Get start time
+
     ${clear} # Clear terminal
-    createWorkingDirectory # Create working directory
-    cPrint "GREEN" "Initiating script."
-    apt-get install netcat > /dev/null # Install netcat if not installed to be used for connection check
+    cPrint "GREEN" "Fetching required packages."
+    apt-get install netcat &> /dev/null # Install netcat if not installed to be used for connection check
+    holdTerminal 1 # Hold
     ${clear} # Clear terminal
 
-    echo ""; cPrint "RED" "Hello $USER!!"
+    echo ""; cPrint "RED" "Running as $USER!!"
     cPrint "YELLOW"	"This script will help you fix your Vmware host modules and vmmon on your $targetLinux."
     holdTerminal 5 # Hold for user to read
 
@@ -377,9 +519,13 @@ function initScript(){
     then
         if isConnected
         then # Network connection established
-            downloadHostModules # Download Vmware host modules
-            exportPath # export PATH
-            sectionBreak
+            displayMainMenu # Display main menu with options
+
+            if [ $ranAnyMethod -eq 1 ]
+            then
+                exportPath # export PATH
+                sectionBreak
+            fi
         else
             exitScript --connectionFailure # Exit script on connection failure
         fi
@@ -389,6 +535,5 @@ function initScript(){
     showScriptInfo # Show Script Information
 }
 
-# Initiate script
-initScript
+initScript # Initiate script
 exitScript --end # Exit script
