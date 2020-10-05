@@ -377,98 +377,104 @@ function retrieveBuildInstallModules(){
             # File with vmware host modules
             file="workstation-$targetVmwareVersion.tar.gz"
 
-            # Check if file was downloaded
-            `wget -q -N $url` &> /dev/null
-            current_ts=`stat -c %y $file`
-            if new_ts=$(stat -c %y $file &> /dev/null)
-            then
-                if [ "$current_ts" != "$new_ts" ];
+            if isConnected
+            then # Network connection established
+                # Check if file was downloaded
+                cPrint "YELLOW" "Downloading modules. Please wait..."
+                `wget -q -N $url` &> /dev/null
+                current_ts=`stat -c %y $file`
+                if new_ts=$(stat -c %y $file &> /dev/null)
                 then
-
-                    if [[ "$1" == "$buildFromSourceAndInstall" ]]
+                    if [ "$current_ts" != "$new_ts" ];
                     then
-                        cPrint "GREEN" "Version $targetVmwareVersion download complete."
-                        holdTerminal 1 # Hold terminal
-                        ${clear} # Clear terminal
 
-                        cPrint "YELLOW" "Extracting downloaded workstation-$targetVmwareVersion.tar.gz"
-                        holdTerminal 1 # Hold terminal
-                        $(tar -xzf workstation-$targetVmwareVersion.tar.gz)
-                        cPrint "GREEN" "Extraction complete."
-                        holdTerminal 1 # Hold terminal
+                        if [[ "$1" == "$buildFromSourceAndInstall" ]]
+                        then
+                            cPrint "GREEN" "Version $targetVmwareVersion download complete."
+                            holdTerminal 1 # Hold terminal
+                            ${clear} # Clear terminal
 
-                        cPrint "YELLOW" "Copying modules for building."
-                        holdTerminal 1 # Hold terminal
-                        path="vmware-host-modules-workstation-$targetVmwareVersion"
-                        $(cp -r $path/* .)
-                        cPrint "GREEN" "Copying complete."
-                        holdTerminal 1 # Hold terminal
+                            cPrint "YELLOW" "Extracting downloaded workstation-$targetVmwareVersion.tar.gz"
+                            holdTerminal 1 # Hold terminal
+                            $(tar -xzf workstation-$targetVmwareVersion.tar.gz)
+                            cPrint "GREEN" "Extraction complete."
+                            holdTerminal 1 # Hold terminal
 
-                        cPrint "YELLOW" "Running make to build modules from Makefile."
-                        holdTerminal 1 # Hold terminal
-                        $(make -i) # make ignoring errors
+                            cPrint "YELLOW" "Copying modules for building."
+                            holdTerminal 1 # Hold terminal
+                            path="vmware-host-modules-workstation-$targetVmwareVersion"
+                            $(cp -r $path/* .)
+                            cPrint "GREEN" "Copying complete."
+                            holdTerminal 1 # Hold terminal
 
-                        cPrint "YELLOW" "Running make install to copy the built modules to required locations."
-                        holdTerminal 2 # Hold
-                        $(make install -i ) # make install ignoring errors
+                            cPrint "YELLOW" "Running make to build modules from Makefile."
+                            holdTerminal 1 # Hold terminal
+                            $(make -i) # make ignoring errors
 
-                        cPrint "GREEN" "Installation by method 1 completed."
-                        holdTerminal 1 # Hold terminal
+                            cPrint "YELLOW" "Running make install to copy the built modules to required locations."
+                            holdTerminal 2 # Hold
+                            $(make install -i ) # make install ignoring errors
 
-                        ranAnyMethod=1 # Set ran any method to 1
+                            cPrint "GREEN" "Installation by method 1 completed."
+                            holdTerminal 1 # Hold terminal
 
-                    elif [[ "$1" == "$replaceOriginalTarballs" ]]
-                    then
-                        cPrint "GREEN" "Version $targetVmwareVersion download complete."
-                        holdTerminal 1 # Hold terminal
-                        ${clear} # Clear terminal
+                            ranAnyMethod=1 # Set ran any method to 1
 
-                        cPrint "YELLOW" "Extracting downloaded workstation-$targetVmwareVersion.tar.gz"
-                        holdTerminal 1 # Hold terminal
-                        $(tar -xzf workstation-$targetVmwareVersion.tar.gz)
-                        cPrint "GREEN" "Extraction complete."
-                        holdTerminal 1 # Hold terminal
+                        elif [[ "$1" == "$replaceOriginalTarballs" ]]
+                        then
+                            cPrint "GREEN" "Version $targetVmwareVersion download complete."
+                            holdTerminal 1 # Hold terminal
+                            ${clear} # Clear terminal
 
-                        cPrint "YELLOW" "Copying vmmon and vmnet for archiving."
-                        holdTerminal 1 # Hold terminal
-                        path="vmware-host-modules-workstation-$targetVmwareVersion"
-                        $(cp -r $path/* .)
-                        cPrint "GREEN" "Copying complete."
-                        holdTerminal 1 # Hold terminal
+                            cPrint "YELLOW" "Extracting downloaded workstation-$targetVmwareVersion.tar.gz"
+                            holdTerminal 1 # Hold terminal
+                            $(tar -xzf workstation-$targetVmwareVersion.tar.gz)
+                            cPrint "GREEN" "Extraction complete."
+                            holdTerminal 1 # Hold terminal
 
-                        cPrint "YELLOW" "Adding vmmon to .tar archive."
-                        holdTerminal 1 # Hold terminal
-                        $(tar -cf vmmon.tar vmmon-only)
-                        cPrint "GREEN" "Archiving complete."
-                        holdTerminal 1 # Hold terminal
+                            cPrint "YELLOW" "Copying vmmon and vmnet for archiving."
+                            holdTerminal 1 # Hold terminal
+                            path="vmware-host-modules-workstation-$targetVmwareVersion"
+                            $(cp -r $path/* .)
+                            cPrint "GREEN" "Copying complete."
+                            holdTerminal 1 # Hold terminal
 
-                        cPrint "YELLOW" "Adding vmnet to .tar archive."
-                        holdTerminal 1 # Hold terminal
-                        $(tar -cf vmnet.tar vmnet-only)
-                        cPrint "GREEN" "Archiving complete."
-                        holdTerminal 1 # Hold terminal
+                            cPrint "YELLOW" "Adding vmmon to .tar archive."
+                            holdTerminal 1 # Hold terminal
+                            $(tar -cf vmmon.tar vmmon-only)
+                            cPrint "GREEN" "Archiving complete."
+                            holdTerminal 1 # Hold terminal
 
-                        cPrint "YELLOW" "Copying vmmon.tar and vmnet.tar to /usr/lib/vmware/modules/source/"
-                        holdTerminal 1 # Hold terminal
-                        cp -v vmmon.tar vmnet.tar /usr/lib/vmware/modules/source/
-                        cPrint "GREEN" "Copying complete."
-                        holdTerminal 1 # Hold terminal
+                            cPrint "YELLOW" "Adding vmnet to .tar archive."
+                            holdTerminal 1 # Hold terminal
+                            $(tar -cf vmnet.tar vmnet-only)
+                            cPrint "GREEN" "Archiving complete."
+                            holdTerminal 1 # Hold terminal
 
-                        cPrint "NC" "Checking for and removing duplicates..."
-                        holdTerminal 1 # Hold terminal
-                        rm -f usr/lib/vmware/modules/source/vmnet\ copy.tar &> /dev/null
+                            cPrint "YELLOW" "Copying vmmon.tar and vmnet.tar to /usr/lib/vmware/modules/source/"
+                            holdTerminal 1 # Hold terminal
+                            cp -v vmmon.tar vmnet.tar /usr/lib/vmware/modules/source/
+                            cPrint "GREEN" "Copying complete."
+                            holdTerminal 1 # Hold terminal
 
-                        cPrint "YELLOW" "Installing modules..."
-                        holdTerminal 1 # Hold terminal
-                        vmware-modconfig --console --install-all
+                            cPrint "NC" "Checking for and removing duplicates..."
+                            holdTerminal 1 # Hold terminal
+                            rm -f usr/lib/vmware/modules/source/vmnet\ copy.tar &> /dev/null
 
-                        cPrint "GREEN" "Installation by method 2 completed."
-                        holdTerminal 1 # Hold terminal
+                            cPrint "YELLOW" "Installing modules..."
+                            holdTerminal 1 # Hold terminal
+                            vmware-modconfig --console --install-all
 
-                        ranAnyMethod=1 # Set ran any method to 1
+                            cPrint "GREEN" "Installation by method 2 completed."
+                            holdTerminal 1 # Hold terminal
+
+                            ranAnyMethod=1 # Set ran any method to 1
+                        fi
                     fi
+                else
+                    cPrint "RED" "\nNetwork connection failure!!\n"
+                    ranAnyMethod=0 # Set ran any method to 0
                 fi
-
             else
                 ${clear} # Clear terminal
                 cPrint "RED" "The version $targetVmwareVersion you entered does not exist. Please try again."
