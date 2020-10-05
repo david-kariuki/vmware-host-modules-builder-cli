@@ -332,7 +332,7 @@ function getTargetVmwareVersion(){
 
             # Prompt user for Vmware version
             cPrint "YELLOW" "Input Vmware version to continue."
-            cPrint "GREEN" "Example version - 15.5.6"
+            cPrint "GREEN" "Example version - 16.0.0"
             read -p ' Vmware version: ' vmwareVersion
             targetVmwareVersion=${vmwareVersion,,} # Convert to lowercase
             cPrint "GREEN" " You chose : $targetVmwareVersion" # Display choice
@@ -356,6 +356,55 @@ function getTargetVmwareVersion(){
             break
         fi
     fi
+}
+
+function makeInstalls(){
+    cd /usr/lib/vmware/modules/source
+
+    cPrint "YELLOW" "Extracting vmmon.tar in /usr/lib/vmware/modules/source"
+    tar xf vmmon.tar
+    cPrint "GREEN" "Extracting complete."
+    holdTerminal 1 # hold
+
+    cPrint "YELLOW" "Extracting vmnet.tar in /usr/lib/vmware/modules/source"
+    tar xf vmnet.tar
+    cPrint "GREEN" "Extracting complete."
+    holdTerminal 1 # hold
+
+    cd vmmon-only
+    cPrint "YELLOW" "Building vmmon modules from MakeFile"
+    holdTerminal 1 # Hold
+    make
+    cd ..
+
+    cd vmnet-only
+    cPrint "YELLOW" "Building vmnet modules from MakeFile"
+    holdTerminal 1 # Hold
+    make
+    cd ..
+
+    uname=`uname -r` # Get Linux verison
+    cPrint "YELLOW" "Creating /lib/modules/$uname/misc"
+    holdTerminal 1 # Hold
+    mkdir /lib/modules/`uname -r`/misc
+
+    cPrint "YELLOW" "Copying vmmon.o to /lib/modules/$uname/misc"
+    holdTerminal 1 # Hold
+    cp vmmon.o /lib/modules/`uname -r`/misc/vmmon.ko
+    cPrint "GREEN" "Done"
+
+    cPrint "YELLOW" "Copying vmnet.o to /lib/modules/$uname/misc"
+    holdTerminal 1 # Hold
+    cp vmnet.o /lib/modules/`uname -r`/misc/vmnet.ko
+    cPrint "GREEN" "Done"
+
+    cPrint "YELLOW" "Generating a list of dependency description of modules and associated map files"
+    holdTerminal 1 # Hold
+    depmod -a
+
+    cPrint "YELLOW" "Restarting vmware service"
+    holdTerminal 1 # Hold
+    /etc/init.d/vmware restart
 }
 
 # Function to build the modules from source and install them manually
@@ -468,6 +517,9 @@ function retrieveBuildInstallModules(){
                             cPrint "GREEN" "Installation by method 2 completed."
                             holdTerminal 1 # Hold terminal
 
+                            # Run make after downloading and copying required module files
+                            makeInstalls
+
                             ranAnyMethod=1 # Set ran any method to 1
                         fi
                     fi
@@ -510,7 +562,7 @@ function displayMainMenu(){
         ${clear} # Clear terminal
 
         # Prompt user for Vmware version
-        cPrint "YELLOW" "This script uses two methods to retrieve the module source build modules and install them.\n\t1. Method 1: Build and install.\n\t2. Method 2: Replace original tarballs.\n\t3. Run both methods.\n\t4. Exit"
+        cPrint "YELLOW" "This script uses two methods to retrieve the module source build modules and install them. Use the second if the first does not work for you.\n\n\t1. Method 1: Build and install.\n\t2. Method 2: Replace original tarballs.\n\t3. Run both methods.\n\t4. Exit"
 
         cPrint "GREEN" "Select a method above to proceed."
         read -p ' Method: ' method
