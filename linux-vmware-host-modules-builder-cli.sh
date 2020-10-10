@@ -39,15 +39,15 @@ function sectionBreak(){
 }
 
 # Function to show connection established message
-function connEst(){
+function connEstMessage(){
     cPrint "GREEN" "Internet connection established.\n"
-    sleep 2s # Hold for user to read
+    holdTerminal 2 # Hold
 }
 
 # Function to show connection failed message
-function connFailed(){
+function connFailedMessage(){
     cPrint "RED" "Internet connection failed!!!"
-    sleep 2s # Hold for user to read
+    holdTerminal 2 # Hold
 }
 
 # Function to show script information
@@ -147,10 +147,10 @@ function isConnected(){
         handshake && $1 == "Verification" { if ($2=="OK") exit; exit 1 }
         $1 $2 == "SSLhandshake" { handshake = 1 }' &> /dev/null
         then # Internet connection established
-            connEst # Display internet connection established message
+            connEstMessage # Display internet connection established message
             return $(true) # Exit loop returning true
         else # Internet connection failed
-            connFailed # Display internet connection failed message
+            connFailedMessage # Display internet connection failed message
 
             if [ "$count" == 0 ]
             then
@@ -247,13 +247,7 @@ function exitScript(){
         fi
     fi
 
-    # Ask for system reboot
-    if querySystemReboot
-    then
-        reboot # Perform system reboot
-    else
-        exit 0 # Exit script
-    fi
+    exit 0 # Exit script
 }
 
 # Function to confirm usage of previously used target version
@@ -276,38 +270,6 @@ function queryReuseTargetVersion(){
             return $(true) # Exit loop returning true
         elif [[ "$queryReuse" == 'no' || "$queryReuse" == 'n'
               || "$queryReuse" == '2' ]]
-        then # Option : No
-            ${clear} # Clear terminal
-            return $(false) # Exit loop returning false
-        else
-            # Invalid entry
-            cPrint "GREEN" "Invalid entry!! Please try again." |& tee -a $logFileName
-        fi
-
-        sleep 1 # Hold loop
-    done
-}
-
-# Function to ask user for stsem reboot
-function querySystemReboot(){
-
-    while true
-    do # Start infinite loop
-        ${clear} # Clear terminal
-
-        # Prompt user to set GNOME Desktop as default
-        cPrint "YELLOW" "A system reboot is recommended to load the modules during startup for vmware to work. Do you want to reboot now?\n\t1. Y (Yes) - to reboot.\n\t2. N (No) to cancel." |& tee -a $logFileName
-        read -p ' option: ' queryReboot
-        queryReboot=${queryReboot,,} # Convert to lowercase
-        # Display choice
-        cPrint "GREEN" " You chose : $queryReboot" |& tee -a $logFileName
-
-        if  [[ "$queryReboot" == 'yes' || "$queryReboot" == 'y'
-              || "$queryReboot" == '1' ]]
-        then # Option : Yes
-            return $(true) # Exit loop returning true
-        elif [[ "$queryReboot" == 'no' || "$queryReboot" == 'n'
-              || "$queryReboot" == '2' ]]
         then # Option : No
             ${clear} # Clear terminal
             return $(false) # Exit loop returning false
@@ -611,6 +573,7 @@ function initScript(){
 
     startTime=`date +%s` # Get start time
 
+    echo ""
     ${clear} # Clear terminal
     cPrint "GREEN" "Fetching required packages."
     apt-get install netcat &> /dev/null # Install netcat if not installed to be used for connection check
