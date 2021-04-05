@@ -295,7 +295,7 @@ function getTargetVmwareVersion(){
 
             # Prompt user for Vmware version
             cPrint "YELLOW" "Input Vmware version to continue."
-            cPrint "GREEN" "Example version - 16.0.0"
+            cPrint "GREEN" "Example version - 16.1.1"
             read -p ' Vmware version: ' vmwareVersion
             targetVmwareVersion=${vmwareVersion,,} # Convert to lowercase
             cPrint "GREEN" " You chose : $targetVmwareVersion" # Display choice
