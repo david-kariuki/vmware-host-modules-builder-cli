@@ -5,7 +5,7 @@
 
 #!/bin/bash
 
-1="" # Empty any parameter passed by user during script exercution
+$1="" # Empty any parameter passed by user during script exercution
 declare -r targetLinux="Debian Linux"
 declare -r scriptVersion="2.0" # Stores scripts version
 declare -l -r scriptName="linux-vmware-host-modules-builder-cli" # Set to lowers and read-only
@@ -20,6 +20,7 @@ declare -i runningBothOptions=0
 declare -i ranAnyMethod=0
 
 clear=clear # Command to clear terminal
+${clear} # Clear terminal
 
 # Function to create a custom coloured print
 function cPrint(){
