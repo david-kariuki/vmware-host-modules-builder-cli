@@ -704,7 +704,7 @@ function initScript(){
             sectionBreak
         fi
     else
-        
+
         exitScript --connectionFailure # Exit script on connection failure
     fi
 fi
