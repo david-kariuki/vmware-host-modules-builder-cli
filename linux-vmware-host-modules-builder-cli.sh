@@ -358,7 +358,7 @@ function getTargetVmwareVersion(){
 
         # Prompt user for Vmware version
         cPrint "YELLOW" "Input Vmware version to continue."
-        cPrint "GREEN" "Example version - 16.1.1"
+        cPrint "GREEN" "Example version - 16.1.2"
         read -p ' Vmware version: ' vmwareVersion
 
         targetVmwareVersion=${vmwareVersion,,} # Convert to lowercase
@@ -679,8 +679,15 @@ function initScript(){
 
     echo ""
     ${clear} # Clear terminal
-    cPrint "GREEN" "Fetching required packages."
-    apt-get install netcat &> /dev/null # Install netcat if not installed to be used for connection check
+    cPrint "GREEN" "Fetching dependent packages."
+
+    # Install netcat if not installed to be used for connection check
+    apt-get install netcat &> /dev/null
+    holdTerminal 1 # Hold
+    ${clear} # Clear terminal
+
+    cPrint "GREEN" "Installing open-vm tools."
+    apt-get install open-vm-tools -y # Install open-vm tools
     holdTerminal 1 # Hold
     ${clear} # Clear terminal
 
