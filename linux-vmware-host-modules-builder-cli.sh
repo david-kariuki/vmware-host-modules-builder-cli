@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright (c) 2020 - 2021 by David Kariuki (dk). All Rights Reserved.
 
 : '
@@ -21,10 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '
 
+
 # This script uses two methods to retrieve the VMWARE module source build modules and
 # install them.
-
-#!/bin/bash
 
 $1="" # Empty any parameter passed by user during script exercution
 declare -r targetLinux="Debian Linux"
