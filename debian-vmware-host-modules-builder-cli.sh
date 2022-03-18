@@ -159,12 +159,11 @@ function formatTime() {
 # Function to initiate logfile
 function createWorkingDirectory(){
 
-    cd ~ || exit # Change directory to users' home directory
+  cd ~ || exit # Change directory to users' home directory
 
-    rm -r vmwareFix > /dev/null # Delete vmwareFix folder
-    $(mkdir vmwareFix) > /dev/null # Create vmwareFix folder
-
-    cd vmwareFix > /dev/null # Change directory to vmwareFix folder
+  $(mkdir vmwareFix) > /dev/null # Create vmwareFix folder
+  cd vmwareFix > /dev/null # Change directory to vmwareFix folder
+  rm -r * # Delete any file from previous script
 }
 
 # Function to check if user is running as root
@@ -333,6 +332,7 @@ function queryReuseTargetVersion(){
     do # Start infinite loop
 
     ${clear} # Clear terminal
+    clearTerminalInputs # Clear terminal inputs
 
     # Prompt user to set GNOME Desktop as default
     cPrint "YELLOW" "Should the script reuse version $targetVmwareVersion for current method?\n\t1. Y (Yes) - to reuse version $targetVmwareVersion\n\t2. N (No) to set another version." |& tee -a $logFileName
@@ -369,6 +369,8 @@ done
 # Function to ask user for vmware version to be used
 function getTargetVmwareVersion(){
 
+    clearTerminalInputs # Clear terminal inputs
+
     # Check if target vmware version is already set
     if [ -z "$targetVmwareVersion" ]
     then
@@ -380,7 +382,7 @@ function getTargetVmwareVersion(){
 
         # Prompt user for Vmware version
         cPrint "YELLOW" "Input Vmware version to continue."
-        cPrint "GREEN" "Example version - 16.1.2"
+        cPrint "GREEN" "Example version - 16.2.3"
         read -p ' Vmware version: ' vmwareVersion
 
         targetVmwareVersion=${vmwareVersion,,} # Convert to lowercase
@@ -410,6 +412,33 @@ else
         break
     fi
 fi
+}
+
+
+# Function to download required packages
+function installRequiredPackages(){
+
+  ${clear} # Clear terminal
+  echo ""
+  cPrint "GREEN" "Fetching and installing dependent packages."
+  holdTerminal 2 # Hold
+
+  # Install netcat if not installed to be used for connection check
+  apt-get install netcat -y &> /dev/null
+  ${clear} # Clear terminal
+
+  apt-get install wget -y &> /dev/null # Install wget
+  ${clear} # Clear terminal
+
+  holdTerminal 1 # Hold
+
+  cPrint "GREEN" "Installing open-vm tools."
+  holdTerminal 2 # Hold
+  apt-get install open-vm-tools -y # Install open-vm tools
+  holdTerminal 1 # Hold
+  ${clear} # Clear terminal
+
+  holdTerminal 1 # Hold
 }
 
 function makeInstalls(){
@@ -633,6 +662,12 @@ function exportPath(){
     #export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
 }
 
+# Function to clear terminal inputs
+function clearTerminalInputs(){
+
+  $1=""; $2=""; $3=""; $4=""; $5=""; # Empty inputs
+}
+
 # Function to display main menu
 function displayMainMenu(){
 
@@ -640,6 +675,7 @@ function displayMainMenu(){
     do # Start infinite loop
 
     ${clear} # Clear terminal
+    clearTerminalInputs # Clear terminal inputs
 
     # Prompt user for Vmware version
     cPrint "YELLOW" "This script uses two methods to retrieve the module source build modules and install them. Use the second if the first does not work for you.\n\n\t1. Method 1: Build and install.\n\t2. Method 2: Replace original tarballs.\n\t3. Run both methods.\n\t4. Exit"
@@ -699,19 +735,7 @@ function initScript(){
 
     startTime=`date +%s` # Get start time
 
-    echo ""
-    ${clear} # Clear terminal
-    cPrint "GREEN" "Fetching dependent packages."
-
-    # Install netcat if not installed to be used for connection check
-    apt-get install netcat &> /dev/null
-    holdTerminal 1 # Hold
-    ${clear} # Clear terminal
-
-    cPrint "GREEN" "Installing open-vm tools."
-    apt-get install open-vm-tools -y # Install open-vm tools
-    holdTerminal 1 # Hold
-    ${clear} # Clear terminal
+    installRequiredPackages # Install required packages
 
     echo ""; cPrint "RED" "Running as $USER!!"
     cPrint "YELLOW"	"This script will help you fix your Vmware host modules and vmmon on your $targetLinux."
