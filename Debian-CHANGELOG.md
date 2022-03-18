@@ -1,5 +1,7 @@
 # CHANGELOG
 
+# debian-vmware-host-modules-builder-cli
+
 **Changelog from version 1.0 - 2.0**
 
 **Version 1.0:**
