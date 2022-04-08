@@ -9,7 +9,7 @@ The script will download the required `vmmnet` and `vmmon` for your `Vmware` ver
 # Supported Linux systems
   1. Debian based distros (Tested on Debian, Ubuntu, Pop, Kali)
   2. Arch Linux.
-  3. *Coming soon* : Fedora Workstation.
+  3. **Coming soon** : Fedora Workstation.
 
 
 </br>
