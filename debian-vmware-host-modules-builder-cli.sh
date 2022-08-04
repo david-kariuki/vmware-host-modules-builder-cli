@@ -382,7 +382,7 @@ function getTargetVmwareVersion(){
 
         # Prompt user for Vmware version
         cPrint "YELLOW" "Input Vmware version to continue."
-        cPrint "GREEN" "Example version - 16.2.3"
+        cPrint "GREEN" "Example version - 16.2.4"
         read -p ' Vmware version: ' vmwareVersion
 
         targetVmwareVersion=${vmwareVersion,,} # Convert to lowercase
@@ -439,7 +439,16 @@ function installRequiredPackages(){
   ${clear} # Clear terminal
 
   holdTerminal 1 # Hold
+
+  cPrint "GREEN" "Installing latest linux headers."
+  holdTerminal 2 # Hold
+  apt-get install linux-headers-$(uname -r)
+  holdTerminal 1 # Hold
+  ${clear} # Clear terminal
+
+  holdTerminal 1 # Hold
 }
+
 
 function makeInstalls(){
 
