@@ -426,6 +426,14 @@ function installRequiredPackages(){
   ${clear} # Clear terminal
 
   holdTerminal 1 # Hold
+
+  cPrint "GREEN" "Installing latest linux headers."
+  holdTerminal 2 # Hold
+  pacman -S linux-headers --no-confirm
+  holdTerminal 1 # Hold
+  ${clear} # Clear terminal
+
+  holdTerminal 1 # Hold
 }
 
 # Function to make installs
