@@ -159,11 +159,11 @@ function formatTime() {
 # Function to initiate logfile
 function createWorkingDirectory(){
 
-  cd ~ || exit # Change directory to users' home directory
+    cd ~ || exit # Change directory to users' home directory
 
-  $(mkdir vmwareFix) > /dev/null 2>&1 # Create vmwareFix folder
-  cd vmwareFix > /dev/null 2>&1 # Change directory to vmwareFix folder
-  rm -r * > /dev/null 2>&1 # Delete any file from previous script
+    $(mkdir vmwareFix) > /dev/null 2>&1 # Create vmwareFix folder
+    cd vmwareFix > /dev/null 2>&1 # Change directory to vmwareFix folder
+    rm -r * > /dev/null 2>&1 # Delete any file from previous script
 }
 
 # Function to check if user is running as root
@@ -185,7 +185,7 @@ function isUserRoot(){
 }
 
 # Function to check for internet connection and validate security on connection
-function isConnected(){
+function isConnected() {
 
     # Creating integer variable
     local -i count=0 # Declare loop count variable
@@ -243,8 +243,43 @@ sleep 1 # Hold loop
 done
 }
 
+# Function to create broken packages file
+function createBrokenPackagesFile() {
+
+    $(rm -f .brokenPackages.txt) # Delete file if exists
+
+    $(touch .brokenPackages.txt) # Create file to store broken packages list
+}
+
+# Function to fix broken packages
+function fixBrokenPackages() {
+
+    createBrokenPackagesFile # Create broken packages list file
+
+    # Check for broken packages and save list to file
+    pacman -Qq > .brokenPackages.txt
+
+    # Check if file is empty
+    if [ -s .brokenPackages.txt ];
+    then # Not empty
+else
+
+    # Loop through file contents
+    for pkgName in $(cat .brokenPackages.txt)
+    do
+
+        # Force reinstall package to fix errors
+        pacman -S --force --noconfirm $pkgName
+    done
+
+    sectionBreak
+    cPrint "GREEN" "Re-installed broken packages successfuly!!"
+    sectionBreak
+fi
+}
+
 # Function to fix any unmet dependencies and broken installs incase of network interruption
-function checkDebugAndRollback(){
+function checkAndDebug(){
 
     ${clear} # Clear terminal
 
@@ -264,10 +299,7 @@ holdTerminal 1 # Hold for user to read
 cPrint "YELLOW"  "Checking for broken/unmet dependencies and fixing broken installs."
 holdTerminal 1 # Hold for user to read
 
-dpkg --configure -a
-sectionBreak
-cPrint "GREEN" "Checking and debugging completed successfuly!!"
-sectionBreak
+fixBrokenPackages # Fix broken packages
 }
 
 # Function to exit script with custom coloured message
@@ -306,7 +338,7 @@ then
     then
 
         # Check for and fix any broken installs or unmet dependencies
-        checkDebugAndRollback --network
+        checkAndDebug --network
     fi
 fi
 
@@ -405,35 +437,35 @@ fi
 # Function to download required packages
 function installRequiredPackages(){
 
-  ${clear} # Clear terminal
-  echo ""
-  cPrint "GREEN" "Fetching and installing dependent packages."
-  holdTerminal 2 # Hold
+    ${clear} # Clear terminal
+    echo ""
+    cPrint "GREEN" "Fetching and installing dependent packages."
+    holdTerminal 2 # Hold
 
-  # Install netcat if not installed to be used for connection check
-  pacman -S netcat --noconfirm &> /dev/null 2>&1
-  ${clear} # Clear terminal
+    # Install netcat if not installed to be used for connection check
+    pacman -S netcat --noconfirm &> /dev/null 2>&1
+    ${clear} # Clear terminal
 
-  pacman -S wget --noconfirm &> /dev/null 2>&1 # Install wget
-  ${clear} # Clear terminal
+    pacman -S wget --noconfirm &> /dev/null 2>&1 # Install wget
+    ${clear} # Clear terminal
 
-  holdTerminal 1 # Hold
+    holdTerminal 1 # Hold
 
-  cPrint "GREEN" "Installing open-vm tools."
-  holdTerminal 2 # Hold
-  pacman -S open-vm-tools --noconfirm # Install open-vm tools
-  holdTerminal 1 # Hold
-  ${clear} # Clear terminal
+    cPrint "GREEN" "Installing open-vm tools."
+    holdTerminal 2 # Hold
+    pacman -S open-vm-tools --noconfirm # Install open-vm tools
+    holdTerminal 1 # Hold
+    ${clear} # Clear terminal
 
-  holdTerminal 1 # Hold
+    holdTerminal 1 # Hold
 
-  cPrint "GREEN" "Installing latest linux headers."
-  holdTerminal 2 # Hold
-  pacman -S linux-headers --no-confirm
-  holdTerminal 1 # Hold
-  ${clear} # Clear terminal
+    cPrint "GREEN" "Installing latest linux headers."
+    holdTerminal 2 # Hold
+    pacman -S linux-headers --no-confirm
+    holdTerminal 1 # Hold
+    ${clear} # Clear terminal
 
-  holdTerminal 1 # Hold
+    holdTerminal 1 # Hold
 }
 
 # Function to make installs
@@ -666,12 +698,14 @@ function exportPath(){
 
 # Function to clear terminal inputs
 function clearTerminalInputs(){
-  unset 1; unset 2; unset 3; unset 4; unset 5; # Unset inputs
-  unset 6; unset 7; unset 8; unset 9; unset 10; # Unset inputs
+    unset 1; unset 2; unset 3; unset 4; unset 5; # Unset inputs
+    unset 6; unset 7; unset 8; unset 9; unset 10; # Unset inputs
 }
 
 # Function to display main menu
 function displayMainMenu(){
+
+    cd ~ || exit # Change directory to users' home directory
 
     while true
     do # Start infinite loop
@@ -718,7 +752,7 @@ function displayMainMenu(){
     if [ $ranAnyMethod -eq 1 ]
     then
 
-        checkDebugAndRollback
+        checkAndDebug
     fi
 
     break # Break from loop

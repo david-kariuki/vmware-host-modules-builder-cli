@@ -245,7 +245,7 @@ done
 }
 
 # Function to fix any unmet dependencies and broken installs incase of network interruption
-function checkDebugAndRollback(){
+function checkAndDebug(){
 
     ${clear} # Clear terminal
 
@@ -318,7 +318,7 @@ then
     then
 
         # Check for and fix any broken installs or unmet dependencies
-        checkDebugAndRollback --network
+        checkAndDebug --network
     fi
 fi
 
@@ -725,7 +725,7 @@ function displayMainMenu(){
     if [ $ranAnyMethod -eq 1 ]
     then
 
-        checkDebugAndRollback
+        checkAndDebug
     fi
 
     break # Break from loop
