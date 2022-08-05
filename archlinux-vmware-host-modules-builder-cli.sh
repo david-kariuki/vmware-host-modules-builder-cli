@@ -262,7 +262,7 @@ function fixBrokenPackages() {
     # Check if file is empty
     if [ -s .brokenPackages.txt ];
     then # Not empty
-    else
+else
 
     # Loop through file contents
     for pkgName in $(cat .brokenPackages.txt)
@@ -704,6 +704,8 @@ function clearTerminalInputs(){
 
 # Function to display main menu
 function displayMainMenu(){
+
+    cd ~ || exit # Change directory to users' home directory
 
     while true
     do # Start infinite loop
