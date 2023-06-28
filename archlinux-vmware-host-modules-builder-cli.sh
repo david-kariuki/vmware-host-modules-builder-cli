@@ -262,20 +262,19 @@ function fixBrokenPackages() {
     # Check if file is empty
     if [ -s .brokenPackages.txt ];
     then # Not empty
-else
-
-    # Loop through file contents
-    for pkgName in $(cat .brokenPackages.txt)
-    do
-
-        # Force reinstall package to fix errors
-        pacman -S --force --noconfirm $pkgName
-    done
-
-    sectionBreak
-    cPrint "GREEN" "Re-installed broken packages successfuly!!"
-    sectionBreak
-fi
+    
+        # Loop through file contents
+        for pkgName in $(cat .brokenPackages.txt)
+        do
+    
+            # Force reinstall package to fix errors
+            pacman -S --force --noconfirm $pkgName
+        done
+    
+        sectionBreak
+        cPrint "GREEN" "Re-installed broken packages successfuly!!"
+        sectionBreak
+    fi
 }
 
 # Function to fix any unmet dependencies and broken installs incase of network interruption
